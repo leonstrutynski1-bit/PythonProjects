@@ -1,5 +1,5 @@
 # First python code. Simple stock screener for comparaison of financial ratios to help with personnal stock picking
-
+# Need to pay attention for correct typo while typing stock ticker
 import yfinance as yf
 import numpy as np
 import pandas as pd

@@ -61,13 +61,13 @@ def ratio_dictionnary(empty_dic,stock):
     else:
         price = history["Close"].iloc[-1]
 
-    # Compute Book-to-Market ratio
+    # Compute Book-to-Price ratio
     book_value_per_share = info.get('bookValue')
 
     if price is not None and book_value_per_share is not None:
-        book_to_market_ratio = book_value_per_share / price
+        book_to_price_ratio = book_value_per_share / price
     else:
-        book_to_market_ratio = None
+        book_to_price_ratio = None
 
     # Build the dictionary
     empty_dic[stock] = {
@@ -77,7 +77,7 @@ def ratio_dictionnary(empty_dic,stock):
         'Return On Equity': info.get('returnOnEquity'),
         'Trailing PE': info.get('trailingPE'),
         'Debt-to-Equity': info.get('debtToEquity'),
-        'Book to Market Ratio': book_to_market_ratio
+        'Book to Price Ratio': book_to_price_ratio
     }
 
     return empty_dic
@@ -128,7 +128,7 @@ def value_strategy(ratio_dic, stock):
     “bad” but rather that it does not fit classic value-investing criteria.
     """
     score = 0
-    b_m_ratio = ratio_dic['Book to Market Ratio'].values[0]
+    b_m_ratio = ratio_dic['Book to Price Ratio'].values[0]
     trailing_pe = ratio_dic['Trailing PE'].values[0]
     if b_m_ratio != None and trailing_pe != None:
         if b_m_ratio > 0.2:

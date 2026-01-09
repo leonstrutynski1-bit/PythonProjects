@@ -19,16 +19,16 @@ def data_check(stock):
 # Check the data of the benchmark
 def data_check_NQ(stock):
     """
-    Check the data of the benchmark, group by tickers
+    Check the data of the sample, group by tickers
 
     Parameters 
     ----------
     stock : str
-        The ticker symbol of the benchmark
+        The ticker symbol of the sample
     """
     return yf.download(stock, period="1y", interval="1d", auto_adjust=False, group_by='ticker')
 
-# Extract correctly the data of a couple of tickers (my benchmark)
+# Extract correctly the data of a couple of tickers (sample)
 def extract_close_prices(history_data):
     if isinstance(history_data.columns, pd.MultiIndex):
         close = history_data.xs('Close', level=1, axis=1)
@@ -56,12 +56,12 @@ def ratio_dictionnary(empty_dic,stock):
     history = stock_ratio.history(period="1d")
 
     if history.empty or "Close" not in history.columns:
-        print(f"⚠ Warning: No price data found for {stock}. Setting price to None.")
+        print(f"Warning: No price data found for {stock}. Setting price to None.")
         price = None
     else:
         price = history["Close"].iloc[-1]
 
-    # Compute Book-to-Market ratio safely
+    # Compute Book-to-Market ratio
     book_value_per_share = info.get('bookValue')
 
     if price is not None and book_value_per_share is not None:
@@ -82,9 +82,9 @@ def ratio_dictionnary(empty_dic,stock):
 
     return empty_dic
 
-def compare_ratios(chosen_stock, stock_ratios, benchmark_means):
+def compare_ratios(chosen_stock, stock_ratios, sample_means):
     """
-    Compares the ratios of a chosen stock to the mean ratios of a benchmark.
+    Compares the ratios of a chosen stock to the mean ratios of the sample.
 
     Parameters
     ----------
@@ -92,22 +92,22 @@ def compare_ratios(chosen_stock, stock_ratios, benchmark_means):
         The ticker symbol of the chosen stock.
     stock_ratios : pandas.DataFrame
         DataFrame containing the ratios of the chosen stock (1 row).
-    benchmark_means : pandas.Series
-        Mean ratios of the benchmark (15 NASDAQ stocks in this case).
+    sample_means : pandas.Series
+        Mean ratios of the sample (15 NASDAQ stocks in this case).
 
     Prints
     ------
-    A message indicating whether each ratio is higher or lower than the benchmark mean.
+    A message indicating whether each ratio is higher or lower than the sample mean.
     """
 
-    for ratio_name in benchmark_means.index:
+    for ratio_name in sample_means.index:
         value = stock_ratios[ratio_name].values[0]
 
         if value is not None:
-            if value > benchmark_means[ratio_name]:
-                print(f"{chosen_stock} has a HIGHER {ratio_name} than the benchmark average.")
+            if value > sample_means[ratio_name]:
+                print(f"{chosen_stock} has a HIGHER {ratio_name} than the sample average.")
             else:
-                print(f"{chosen_stock} has a LOWER {ratio_name} than the benchmark average.")
+                print(f"{chosen_stock} has a LOWER {ratio_name} than the sample average.")
     
 
 
@@ -157,49 +157,117 @@ def value_strategy(ratio_dic, stock):
     return score
 
 
-def plot_two_timeseries(df1, df2, title1, title2, figsize=(14, 10)):
+def _to_series(x, name=None):
+    """Convert Series/DataFrame(1 col)/array-like to a pandas Series."""
+    if isinstance(x, pd.DataFrame):
+        if x.shape[1] == 1:
+            s = x.iloc[:, 0].copy()
+            if name:
+                s.name = name
+            return s
+        raise ValueError("Expected a Series or a single-column DataFrame for this input.")
+    if isinstance(x, pd.Series):
+        s = x.copy()
+        if name:
+            s.name = name
+        return s
+    return pd.Series(x, name=name)
+
+def _normalize_to_100(series_or_df):
+    """Normalize price series (or each column in df) to start at 100."""
+    if isinstance(series_or_df, pd.Series):
+        base = series_or_df.dropna().iloc[0]
+        return (series_or_df / base) * 100.0
+    elif isinstance(series_or_df, pd.DataFrame):
+        out = series_or_df.copy()
+        for c in out.columns:
+            col = out[c].dropna()
+            if len(col) == 0:
+                out[c] = pd.NA
+            else:
+                out[c] = (out[c] / col.iloc[0]) * 100.0
+        return out
+    else:
+        raise TypeError("Expected pandas Series or DataFrame.")
+
+def plot_stock_universe_benchmark(
+    chosen_prices,
+    universe_prices,
+    benchmark_prices,
+    chosen_label="Chosen Stock",
+    benchmark_label="QQQ",
+    title_universe="Universe (15 stocks)",
+    normalize=True,
+    figsize=(14, 11),
+    max_universe_lines=15
+):
     """
-    Plot two time series one above the other using matplotlib.
+    Plot 3 stacked charts:
+      1) chosen stock
+      2) universe of stocks (DataFrame columns = tickers)
+      3) benchmark (QQQ)
 
     Parameters
     ----------
-    df1 : pandas.Series or pandas.DataFrame
-        The first time series to display (typically the chosen stock).
-    df2 : pandas.DataFrame or pandas.Series
-        The second time series to display (typically a benchmark or multiple tickers).
-    title1 : str
-        Title for the first subplot.
-    title2 : str
-        Title for the second subplot.
-    figsize : tuple, optional
-        Size of the overall matplotlib figure in inches. Default is (14, 10).
-
-    Description
-    -----------
-    This function creates a figure with two subplots arranged vertically.
-    - The first subplot displays df1 with a single line (if pandas Series) or multiple lines (if DataFrame).
-    - The second subplot displays df2, also rendered with pandas' built-in `.plot()` method.
-    
-    This layout allows the user to compare a chosen stock's price evolution
-    with a group of benchmark stocks (e.g., NASDAQ top 15) in a single matplotlib window.
-
-    The function automatically adjusts spacing using `plt.tight_layout()`
-    and displays the final figure with `plt.show()`.
+    chosen_prices : pd.Series or single-col DataFrame
+        Price series of the chosen stock.
+    universe_prices : pd.DataFrame
+        Price series of the universe (columns=tickers).
+    benchmark_prices : pd.Series or single-col DataFrame
+        Price series of benchmark ETF (QQQ).
+    normalize : bool
+        If True, rebases each series to 100 at the first available date.
+    max_universe_lines : int
+        Safety to avoid plotting hundreds of tickers by accident.
     """
 
-    fig, axes = plt.subplots(2, 1, figsize=figsize)
+    # Convert & clean
+    chosen = _to_series(chosen_prices, name=chosen_label).dropna()
+    bench = _to_series(benchmark_prices, name=benchmark_label).dropna()
 
-    # First graph (df1)
-    axes[0].plot(df1.index, df1.values, lw=1.5)
-    axes[0].set_title(title1, fontsize=14)
-    axes[0].set_xlabel("Date")
-    axes[0].set_ylabel("Price")
+    if not isinstance(universe_prices, pd.DataFrame):
+        raise TypeError("universe_prices must be a pandas DataFrame with columns=tickers.")
 
-    # Second graph (df2)
-    df2.plot(ax=axes[1], lw=1)
-    axes[1].set_title(title2, fontsize=14)
-    axes[1].set_xlabel("Date")
-    axes[1].set_ylabel("Price")
+    universe = universe_prices.copy().dropna(how="all").ffill()
+
+    # Safety: limit universe lines
+    if universe.shape[1] > max_universe_lines:
+        universe = universe.iloc[:, :max_universe_lines]
+
+    # Align dates (intersection)
+    common_idx = chosen.index.intersection(universe.index).intersection(bench.index)
+    chosen = chosen.loc[common_idx]
+    universe = universe.loc[common_idx]
+    bench = bench.loc[common_idx]
+
+    if normalize:
+        chosen_plot = _normalize_to_100(chosen)
+        universe_plot = _normalize_to_100(universe)
+        bench_plot = _normalize_to_100(bench)
+        ylab = "Indexed Price (Start=100)"
+    else:
+        chosen_plot = chosen
+        universe_plot = universe
+        bench_plot = bench
+        ylab = "Price"
+
+    fig, axes = plt.subplots(3, 1, figsize=figsize)
+
+    # 1) chosen
+    axes[0].plot(chosen_plot.index, chosen_plot.values, lw=1.6)
+    axes[0].set_title(f"{chosen_label}", fontsize=14)
+    axes[0].set_ylabel(ylab)
+
+    # 2) universe
+    universe_plot.plot(ax=axes[1], lw=1, legend=False)
+    axes[1].set_title(title_universe, fontsize=14)
+    axes[1].set_ylabel(ylab)
+
+    # 3) benchmark
+    axes[2].plot(bench_plot.index, bench_plot.values, lw=1.6)
+    axes[2].set_title(f"Benchmark ({benchmark_label})", fontsize=14)
+    axes[2].set_ylabel(ylab)
+    axes[2].set_xlabel("Date")
 
     plt.tight_layout()
     plt.show()

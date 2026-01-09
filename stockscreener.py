@@ -48,15 +48,19 @@ else:
     # My value investing strategy inspired of Fama-French HML factor
     score_value_investing = fonctions_stock_screener.value_strategy(ratio_graph_chosen_stock, chosen_stock)
     
-    # Showing the graph of the chosen stock and the benchmark only if we say yes to the terminal
+    # Showing the graph of the chosen stock, the sample and the benchmark (QQQ) only if we say yes to the terminal
     while True : 
         graph_client = input("\nDo you want to see the stock price graph for the chosen stock? (yes/no): ", ).strip().lower()
         if graph_client == 'yes':
-            fonctions_stock_screener.plot_two_timeseries(
-                data_check['Close'],
-                returns_nq100,
-                title1=f"Daily Closing Prices for {chosen_stock}",
-                title2="Daily Charts of Major NASDAQ Tech Stocks Over the Past Year"
+            qqq = yf.download("QQQ", period="1y", interval="1d", auto_adjust=True)["Close"]
+            fonctions_stock_screener.plot_stock_universe_benchmark(
+                chosen_prices=data_check["Close"],          
+                universe_prices=returns_nq100,              
+                benchmark_prices=qqq,
+                chosen_label=chosen_stock.upper(),
+                benchmark_label="QQQ",
+                title_universe="Top 15 NASDAQ (sample)",
+                normalize=True
             )
         elif graph_client == 'no':
             break

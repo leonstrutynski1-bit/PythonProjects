@@ -116,11 +116,11 @@ def value_strategy(ratio_dic, stock):
     Value Investing Score Strategy (inspired by Fama-French HML factor)
 
     Rules:
-    - High expected return (2 points): B/M > 0.2 AND P/E < 20
-    - Medium expected return (1 point): 0.1 < B/M <= 0.2 AND 20 <= P/E < 35
-    - Low expected return (0 points): B/M <= 0.1 OR P/E >= 35
+    - High expected return (3 or 4 points): B/P > 0.2 AND P/E < 20
+    - Medium expected return (2 points): 0.1 < B/P <= 0.2 AND 20 <= P/E < 35
+    - Low expected return (0 points): B/P <= 0.1 OR P/E >= 35
 
-    Score: sum of points from both B/M and P/E → total out of 4.
+    Score: sum of points from both B/P and P/E → total out of 4.
 
     Note:
     These thresholds are simplified investing heuristics and not 
@@ -156,6 +156,50 @@ def value_strategy(ratio_dic, stock):
         print("\nInsufficient data to calculate Value Investing Score.")
     return score
 
+def append_list(sample_ratios):
+    """
+    Value-based screening with simple momentum confirmation (work in progress).
+
+    This function classifies stocks into three lists based on a Value Score
+    computed from financial ratios (Book-to-Price and Trailing P/E):
+
+    - "Buy list"   : stocks with high value scores (3/4 or 4/4).
+      These are relatively cheap compared to the sample universe.
+      They are NOT automatically good investments, only potential candidates.
+
+    - "Hold list"  : stocks with medium value scores (2/4).
+      These are neither clearly cheap nor clearly expensive.
+
+    - "Sell list"  : stocks with low value scores (0/4 or 1/4).
+      These are relatively expensive or growth-oriented stocks.
+
+    Limitations:
+    - The scoring rules are simplified and not statistically backtested yet.
+    - Book-to-Price can be a weak metric for technology stocks because much
+      of their value is intangible (software, data, patents, R&D, brand).
+    - Results should be used as a screening tool, not as a final buy/sell rule.
+    """
+    buy_list = []
+    hold_list = []
+    sell_list = []
+
+    for stock in sample_ratios.index:
+        ratio_dic = sample_ratios.loc[[stock]]
+        score = value_strategy(ratio_dic, stock)
+
+        if score >= 3:
+            buy_list.append(stock)
+        elif score == 2:
+            hold_list.append(stock)
+        else:
+            sell_list.append(stock)
+
+    print("\nValue Strategy Results:")
+    print(f"Buy List: {buy_list}")
+    print(f"Hold List: {hold_list}")
+    print(f"Sell List: {sell_list}")
+
+    return buy_list, hold_list, sell_list
 
 def _to_series(x, name=None):
     """Convert Series/DataFrame(1 col)/array-like to a pandas Series."""

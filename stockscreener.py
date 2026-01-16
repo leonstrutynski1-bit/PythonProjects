@@ -28,6 +28,7 @@ else:
 
     # Display and mean financial ratios for the top 15 NASDAQ tech stocks
     ratio_graph = pd.DataFrame(ratio_NQ).T
+    print(ratio_graph)
     mean_ratios = ratio_graph.mean()
     print("\nMean Financial Ratios for Top 15 NASDAQ Tech Stocks:")
     print(mean_ratios)
@@ -45,8 +46,28 @@ else:
     # Compare chosen stock ratios with mean ratios of top 15 NASDAQ tech stocks
     fonctions_stock_screener.compare_ratios(chosen_stock, ratio_graph_chosen_stock, mean_ratios)
     
-    # My value investing strategy inspired of Fama-French HML factor
+    # My value investing strategy inspired by the Fama-French HML (High Minus Low) factor.
+    # The score (out of 4) is based on two value metrics: Book-to-Price and Trailing P/E.
+    # Higher scores indicate stocks that are cheaper relative to their fundamentals, not necessarily safer or better companies.
+    # Lower scores indicate stocks that are more expensive or growth-oriented, not necessarily low risk.
+    #
+    # This strategy is NOT statistically backtested yet and should be used with caution.
+    # It is meant as a simple screening tool rather than an automatic buy/sell signal.
+    # I plan to backtest this approach in the future on a larger dataset with more advanced techniques.
+    #
+    # Note: Book-to-Price may be a weak metric for technology stocks because much of their value is intangible
+    # (software, data, patents, brand, R&D), which is not fully captured in book value.
+    # Therefore, results should be interpreted carefully, especially in the tech sector.
     score_value_investing = fonctions_stock_screener.value_strategy(ratio_graph_chosen_stock, chosen_stock)
+
+    # Display the value investing score of all the benchmark stocks
+    value_investing_momentum = input("\nDo you want to see the Value Investing score of all the benchmark stocks? (yes/no): ", ).strip().lower()
+    if value_investing_momentum == 'yes':
+        for holding in tickers_15_NQ:
+            ratio_row = ratio_graph.loc[[holding]]
+            score = fonctions_stock_screener.value_strategy(ratio_row, holding)
+            
+            
     
     # Showing the graph of the chosen stock, the sample and the benchmark (QQQ) only if we say yes to the terminal
     while True : 

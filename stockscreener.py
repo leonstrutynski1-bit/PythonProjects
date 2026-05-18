@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import fonctions_stock_screener
 
 # Get user input for the stock ticker to analyze
-chosen_stock = input("Chosen stocks for analysis: ", )
+chosen_stock = input("Chosen stocks for analysis: ",).strip().upper()
 data_check = fonctions_stock_screener.data_check(chosen_stock)
 
 # Check if the chosen stock ticker is valid

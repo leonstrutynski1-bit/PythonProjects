@@ -15,15 +15,10 @@ A Python-based stock screener that:
 
 > Note: This is a simplified, educational model and has not yet been fully backtested.
 
-### Quantitative & Financial Modeling (Work in Progress)
-Future improvements and ongoing work include:
-- Adding a momentum filter to the value strategy  
-- Backtesting strategies on historical data  
-
-### Option Pricing Model (Planned Work)
+### Option Pricing Model 
 This project will include:
 - Implementing the Black–Scholes model to price European call and put options  
-- Retrieving and preprocessing the required market inputs (spot price, volatility, interest rate, time to maturity)
+
 
 ## Tools & Libraries Used
 - Python  

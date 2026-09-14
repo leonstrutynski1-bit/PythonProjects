@@ -1,6 +1,6 @@
 # PythonProjects — Finance & Quantitative Analysis
 
-This repository contains a collection of my Python projects focused on finance, data analysis, and quantitative investing. These projects are part of my learning process as I develop practical programming and financial modeling skills alongside my studies.
+This repository contains two of my first Python projects focused on finance, data analysis, and quantitative investing. These projects are part of my learning process as I develop practical programming and financial modeling skills alongside my studies.
 
 ## Main projects in this repository
 

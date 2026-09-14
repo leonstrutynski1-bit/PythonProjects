@@ -10,7 +10,7 @@ A Python-based stock screener that:
 - Computes financial ratios (e.g., Trailing P/E, Book-to-Price)  
 - Compares a chosen stock against a sample universe of 15 major Nasdaq tech companies  
 - Implements a **Value Score inspired by the Fama–French HML factor**  
-- Classifies stocks into **Buy / Hold / Sell** lists based on valuation  
+- Classifies stocks into **Buy / Hold / Sell** lists based on valuation (On going...)
 - Includes visualization of price performance relative to a benchmark (QQQ)
 
 > Note: This is a simplified, educational model and has not yet been fully backtested.
